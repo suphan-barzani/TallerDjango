@@ -1,0 +1,151 @@
+
+django-admin startproject taller_django
+
+# Esto es un proyecto, no una app. Una app es una aplicacion web que hace algo. Un proyecto es una coleccion de configuraciones y apps para un sitio web concreto. Un proyecto puede contener varias apps. Una app puede estar en varios proyectos.
+
+# Ensenar y explicar settings
+
+# Explicar model-view-template
+
+# Crear views.py y crear un homepage. Explicar las class-based views. Crear un home.html.
+
+'DIRS': [
+            os.path.join(BASE_DIR, 'taller_django/templates'),
+        ],
+
+# Poner un boton, pasar argumentos, y ver diferencias entre get y post
+
+<html>
+  <head>
+  </head>
+
+  <body>
+    <h2>Hello world!</h2>
+
+    <p>I came from <strong>{{ get_or_post }}</strong></p>
+
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">Button</button>
+    </form>
+  </body>
+</html>
+
+# Vamos a crear un base.html y hacer enlaces de signup y login
+
+# Vamos a extender el modelo de usuarios de django. Explicar que esto es muy recomendable hacerlo siempre, aunque lo que haya ya nos valga tal cual. Es necesario por si en el futuro queremos ampliar funcionalidades. El modelo de usuarios de django tiene ya implementadas funciones de login, logout, etc.
+
+python manage.py startapp accounts
+
+--
+
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+class User(AbstractUser):
+    bio = models.TextField(max_length=500, blank=True)
+    location = models.CharField(max_length=30, blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+
+AUTH_USER_MODEL = 'accounts.User'
+
+# Explicar el makemigrations y migrate
+
+--
+
+# Vamos a crear ahora una vista para el signup y otra para el login. forms.py:
+
+from django import forms
+from django.contrib.auth.forms import UserCreationForm
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+class SignupForm(UserCreationForm):
+    first_name = forms.CharField(max_length=30, required=False,
+                                 help_text='Optional.')
+    last_name = forms.CharField(max_length=30, required=False,
+                                help_text='Optional.')
+    email = forms.EmailField(
+        max_length=254,
+        help_text='Required. Fill with a valid email address.'
+    )
+
+    bio = forms.CharField(max_length=500, required=False,
+                          help_text='Optional.')
+    location = forms.CharField(max_length=30, required=False,
+                               help_text='Optional.')
+    birth_date = forms.DateField(input_formats=['%d/%m/%Y'],
+                                 required=False,
+                                 help_text='Optional.')
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'password1',
+                  'password2', 'bio', 'location', 'birth_date')
+
+
+--
+
+views.py:
+
+from django.shortcuts import render, redirect
+from django.views.generic.edit import FormView
+from django.contrib.auth import login, authenticate
+
+from accounts.forms import SignupForm
+
+class SignupView(FormView):
+    def get(self, request):
+        form = SignupForm()
+
+        return render(request, 'accounts/signup.html', {'form': form})
+
+    def post(self, request):
+        form = SignupForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password1')
+
+            user = authenticate(username=username, password=password)
+
+            login(request, user)
+
+            return redirect('home')
+        else:
+            return render(request, 'accounts/signup.html', {'form': form})
+
+
+--
+
+# Modificamos el base.html y home.html para que compruebe si estamos o no logueados con logout
+
+from django.contrib.auth.views import LogoutView
+
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+
+# Ahora creamos la login page. urls.py:
+
+from django.contrib import admin
+from django.urls import path
+
+from accounts.views import SignupView
+from accounts.views import LoginView
+from taller_django.views import HomeView
+from django.contrib.auth.views import LogoutView
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', HomeView.as_view(), name='home'),
+    path('signup', SignupView.as_view(), name='signup'),
+    path('logout', LogoutView.as_view(), name='logout'),
+    path('login', LoginView.as_view(), name='login')
+]
+
+--
+
+# Ensenar ya como funciona el shell y el acceso a los modelos
