@@ -29,5 +29,5 @@ class SignupView(FormView):
         else:
             return render(request, 'accounts/signup.html', {'form': form})
 
-class NewLoginView(BaseLoginView):
+class LoginView(BaseLoginView):
     template_name = 'accounts/login.html'

@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path
 
 from accounts.views import SignupView
-from accounts.views import NewLoginView
+from accounts.views import LoginView
 from taller_django.views import HomeView
 from django.contrib.auth.views import LogoutView
 
@@ -26,5 +26,5 @@ urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     path('signup', SignupView.as_view(), name='signup'),
     path('logout', LogoutView.as_view(), name='logout'),
-    path('login', NewLoginView.as_view(), name='login')
+    path('login', LoginView.as_view(), name='login')
 ]
